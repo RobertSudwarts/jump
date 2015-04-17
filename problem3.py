@@ -3,7 +3,7 @@
 
 import csv
 from decimal import *
-getcontext().prec = 4
+getcontext().prec = 8
 
 
 class Portfolio(object):
@@ -14,9 +14,13 @@ class Portfolio(object):
     # that and make it static for clarity.
     cash = {'USD': Decimal('0'), 'CAD': Decimal('0'), 'GBp': Decimal('0')}
 
-    def __repr__(self):
+    def display(self, day):
+        print "\n### " + day + "\n"
         for asset in self.assets:
             print asset
+        print
+        print "portfolio_value", self.portfolio_value()
+        print "cash", self.cash
 
     def asset_by_code(self, code):
         for a in self.assets:
@@ -28,11 +32,11 @@ class Portfolio(object):
         Compute the Total Value of the positions per currency
         '''
         v = {}
-        for code, k in self.assets.iteritems():
-            if k['Currency'] in v:
-                v[k['Currency']] += Decimal(k['Total Value'])
+        for asset in self.assets:
+            if asset.ccy in v:
+                v[asset.ccy] += asset.total_val
             else:
-                v[k['Currency']] = Decimal(k['Total Value'])
+                v[asset.ccy] = asset.total_val
 
         return v
 
@@ -56,9 +60,10 @@ class Asset(object):
     def ssplit(self, ratio):
         '''Adjust quantity, price
 
-        The change in liquidity will have a secondary impact on the
-        price and hence total value but I'll conveniently ignore that(!)
-        and assume that total value remains unchanged
+        The change in liquidity will have a secondary
+        impact on the price and hence total value
+        but I'll conveniently ignore that(!) and
+        assume that total value remains unchanged
 
         ratio would be for example
             '3:1' => (3 for 1),
@@ -76,7 +81,7 @@ class Asset(object):
         * return cash dividend amount
         '''
         self.px = self.px * (1 - (div / self.px))
-        self.total_val = self.qty * self.px
+        self.total_val = Decimal(str(self.qty * self.px))
 
         # return amnt to be added to portfolio cash
         return self.qty * div
@@ -103,7 +108,6 @@ class Asset(object):
         return "<Asset(code='%s', descr='%s', ctry='%s', qty=%d, px=%0.4f, ccy='%s', val=%s)>" \
             % (self.code, self.description, self.country, self.qty, self.px, self.ccy, self.total_val)
 
-
 def main():
     portfolio = Portfolio()
 
@@ -116,14 +120,9 @@ def main():
                 portfolio.assets.append(asset)
 
     # T0
-    print "\n## T0\n"
-    portfolio.__repr__()
-    print
-    print "cash", portfolio.cash
-    print
+    portfolio.display('T0')
 
     # Monday
-
     # BAC  Cash dividend - $0.02/share
     asset = portfolio.asset_by_code('BAC')
     delta_cash = asset.cash_div(0.02)
@@ -140,11 +139,7 @@ def main():
     # RIM/BB Name change - new name is "Blackberry"
     asset.name_change('Blackberry')
 
-    print "\n## Monday\n"
-    portfolio.__repr__()
-    print
-    print "cash", portfolio.cash
-    print
+    portfolio.display('Monday')
 
     # Tuesday
 
@@ -163,11 +158,7 @@ def main():
     delta_cash = asset.cash_div(0.03)
     portfolio.cash[asset.ccy] += Decimal(delta_cash)
 
-    print "\n## Tuesday\n"
-    portfolio.__repr__()
-    print
-    print "cash", portfolio.cash
-    print
+    portfolio.display('Tuesday')
 
     # Wednesday
     # GOOG  Stock split - 3 for 1
@@ -178,22 +169,14 @@ def main():
     asset = portfolio.asset_by_code('SIRI')
     asset.ssplit('1:3')
 
-    print "\n## Wednesday\n"
-    portfolio.__repr__()
-    print
-    print "cash", portfolio.cash
-    print
+    portfolio.display('Wednesday')
 
     # Thursday
     #  T  Stock dividend - 1.075/share
     asset = portfolio.asset_by_code('T')
     asset.stock_div(1.075)
 
-    print "\n## Thursday\n"
-    portfolio.__repr__()
-    print
-    print "cash", portfolio.cash
-    print
+    portfolio.display('Thursday')
 
     # Friday
 
@@ -202,12 +185,7 @@ def main():
     delta_cash = asset.cash_div(0.4125)
     portfolio.cash[asset.ccy] += Decimal(delta_cash)
 
-    print "\n## Friday\n"
-    portfolio.__repr__()
-    print
-    print "cash", portfolio.cash
-    print
-
+    portfolio.display('Friday')
 
 if __name__ == '__main__':
     main()
