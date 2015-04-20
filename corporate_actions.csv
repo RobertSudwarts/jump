@@ -1,0 +1,12 @@
+Day,Symbol,Corporate_Action,ccy
+Monday,BAC,Cash dividend,0.02,USD
+Monday,REX,Stock split,9:10,
+Monday,RIM,Symbol change,BB,
+Monday,RIM,Name change,Blackberry,
+Tuesday,INTC,Cash dividend,0.21,USD
+Tuesday,POT,Cash dividend,0.07,USD
+Tuesday,BARC,Cash dividend,3,GBp
+Wednesday,GOOG,Stock split,3:1,
+Wednesday,SIRI,Stock split,1:3,
+Thursday,T,Stock dividend,1.075,
+Friday,QQQ,Cash dividend,0.4125,

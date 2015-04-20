@@ -107,6 +107,33 @@ class Asset(object):
             % (self.code, self.description, self.country, self.qty, self.px, self.ccy, self.total_val)
 
 
+def get_corporate_actions():
+    '''
+    iterate through the corportate actions file to create a dict of:
+       day -> code -> [actions]
+
+    the nested dict (although a little more complicated) means that the
+    asset only needs to be 'queried' once per day.
+    '''
+    corporate_actions = {}
+    with open('corporate_actions.csv', 'rb') as f:
+        reader = csv.reader(f)
+        next(reader, None)  # ignore header row
+        for rw in reader:
+            day = rw[0]
+            code = rw[1]
+            if day not in corporate_actions:
+                corporate_actions[day] = {}
+                corporate_actions[day][code] = [rw[2:]]
+            else:
+                if code not in corporate_actions[day]:
+                    corporate_actions[day][code] = [rw[2:]]
+                else:
+                    corporate_actions[day][code].append(rw[2:])
+
+    return corporate_actions
+
+
 def main():
     portfolio = Portfolio()
 
@@ -118,75 +145,42 @@ def main():
                 asset = Asset(**row)
                 portfolio.assets.append(asset)
 
-    #with open('corporate_actions.csv', 'rb') as f:
-        #reader = csv.Reader()
-
     # T0
     portfolio.display('T0')
 
-    # Monday
-    # BAC  Cash dividend - $0.02/share
-    asset = portfolio.asset_by_code('BAC')
-    delta_cash = asset.cash_div(0.02)
-    portfolio.cash[asset.ccy] += Decimal(delta_cash)
+    corporate_actions = get_corporate_actions()
 
-    # REX  Stock split - 9 for 10
-    asset = portfolio.asset_by_code('REX')
-    asset.ssplit('9:10')
+    for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday']:
 
-    # RIM  Symbol change - new symbol is BB
-    # and new name is "Blackberry"
-    asset = portfolio.asset_by_code('RIM')
-    asset.code_change('BB')
-    asset.name_change('Blackberry')
+        print '\ncorporate actions: (%s)' % day
 
-    portfolio.display('Monday')
+        for code in corporate_actions[day]:
 
-    # Tuesday
+            asset = portfolio.asset_by_code(code)
 
-    # INTC Cash dividend - $0.21/share
-    asset = portfolio.asset_by_code('INTC')
-    delta_cash = asset.cash_div(0.21)
-    portfolio.cash[asset.ccy] += Decimal(delta_cash)
+            for _type, div, ccy in corporate_actions[day][code]:
+                print "\t", code, _type, div, ccy
 
-    # POT  Cash dividend - 0.07 CAD/share
-    asset = portfolio.asset_by_code('POT')
-    delta_cash = asset.cash_div(0.07)
-    portfolio.cash[asset.ccy] += Decimal(delta_cash)
+                if _type == 'Cash dividend':
+                    delta_cash = asset.cash_div(float(div))
+                    portfolio.cash[asset.ccy] += Decimal(delta_cash)
 
-    # BARC Cash dividend - 3 GBp/share
-    asset = portfolio.asset_by_code('BARC')
-    delta_cash = asset.cash_div(3) ## Not 0.03!!
-    portfolio.cash[asset.ccy] += Decimal(delta_cash)
+                elif _type == 'Stock dividend':
+                    asset.stock_div(float(div))
 
-    portfolio.display('Tuesday')
+                elif _type == 'Stock split':
+                    asset.ssplit(div)
 
-    # Wednesday
-    # GOOG  Stock split - 3 for 1
-    asset = portfolio.asset_by_code('GOOG')
-    asset.ssplit('3:1')
+                elif _type == 'Name change':
+                    asset.name_change(div)
 
-    # SIRI  Stock split - 1 for 3
-    asset = portfolio.asset_by_code('SIRI')
-    asset.ssplit('1:3')
+                elif _type == 'Symbol change':
+                    asset.code_change(div)
 
-    portfolio.display('Wednesday')
+                else:
+                    raise AttributeError("unhandled corporate action type")
 
-    # Thursday
-    #  T  Stock dividend - 1.075/share
-    asset = portfolio.asset_by_code('T')
-    asset.stock_div(1.075)
-
-    portfolio.display('Thursday')
-
-    # Friday
-
-    # QQQ  Cash dividend - $0.4125/share
-    asset = portfolio.asset_by_code('QQQ')
-    delta_cash = asset.cash_div(0.4125)
-    portfolio.cash[asset.ccy] += Decimal(delta_cash)
-
-    portfolio.display('Friday')
+        portfolio.display(day)
 
 if __name__ == '__main__':
     main()
