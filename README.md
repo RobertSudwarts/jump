@@ -1,4 +1,4 @@
-# technical assignment from Jump Trading interview
+# Jump Trading -- technical assignment
 
   *  parse text file:  write a Python script to find out which 
       symbols in fileA are not contained in fileB for groupA and exchanges B and C
