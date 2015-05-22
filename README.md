@@ -1,6 +1,7 @@
 # technical assignment from Jump Trading interview
 
-q1.  parse text file
+  #.  parse text file:  write a Python script to find out which 
+      symbols in fileA are not contained in fileB for groupA and exchanges B and C
 
 q2.  parse text file
 
